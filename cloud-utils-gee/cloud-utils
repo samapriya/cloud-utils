@@ -1,0 +1,123 @@
+/*
+Copyright (c) 2020 Samapriya Roy. All rights reserved.
+
+This work is licensed under the terms of the Apache 2 license.  
+For a copy, see <https://www.apache.org/licenses/LICENSE-2.0>.
+
+Cite using:
+
+
+*/
+
+
+//UDM2 Band Descriptions from (https://developers.planet.com/docs/data/udm-2/)
+
+/*
+Band 1	Clear map	[0, 1]	0: not clear, 1: clear
+Band 2	Snow map	[0, 1]	0: no snow or ice, 1: snow or ice
+Band 3	Shadow map	[0, 1]	0: no shadow, 1: shadow
+Band 4	Light haze map	[0, 1]	0: no light haze, 1: light haze
+Band 5	Heavy haze map	[0, 1]	0: no heavy haze, 1: heavy haze
+Band 6	Cloud map	[0, 1]	0: no cloud, 1: cloud
+Band 7	Confidence map	[0-100]	percentage value: per-pixel algorithmic confidence in classification
+Band 8	Unusable pixels	--	Equivalent to the UDM asset: see Planet's Imagery Specification for complete details
+
+*/
+
+/*
+Tools included:
+Daily max composite: function(collection)
+Daily median composite: function(collection)
+Daily quality mosaics composite: function(collection,quality_band)
+Daily percentile composite: function(collection,percentile)
+udm2info: function showInfo(collection,geometry)
+*/
+
+// Get Daily Max composites (collection)
+exports.dailymax = function(collection) {
+  var filtered = collection.map(function(img) {return img.set('date', img.date().format("YYYY-MM-dd")).copyProperties(img)})
+  var dates = ee.List(filtered.distinct("date").aggregate_array("date"))
+
+  return ee.ImageCollection(dates.map(function(date){
+  var d = ee.Date(date)
+  var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
+  return composite_collection.max().set('date',date)
+  .set('count',composite_collection.size())
+  }));
+}
+
+// Get Daily Median composites (collection)
+exports.dailymedian = function(collection) {
+  var filtered = collection.map(function(img) {return img.set('date', img.date().format("YYYY-MM-dd")).copyProperties(img)})
+  var dates = ee.List(filtered.distinct("date").aggregate_array("date"))
+
+  return ee.ImageCollection(dates.map(function(date){
+  var d = ee.Date(date)
+  var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
+  return composite_collection.median().set('date',date)
+  .set('count',composite_collection.size())
+  }));
+}
+
+
+// Get Daily quality mosaics (collection,quality_mosaic_band)
+exports.dailyquality = function(collection,band) {
+  var filtered = collection.map(function(img) {return img.set('date', img.date().format("YYYY-MM-dd")).copyProperties(img)})
+  var dates = ee.List(filtered.distinct("date").aggregate_array("date"))
+
+  return ee.ImageCollection(dates.map(function(date){
+  var d = ee.Date(date)
+  var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
+  return composite_collection.qualityMosaic(band).set('date',date)
+  .set('count',composite_collection.size())
+  }));
+}
+
+
+// Get Daily percentile mosaics (collection,percentile value)
+exports.dailypercentile = function(collection,percentile) {
+  var filtered = collection.map(function(img) {return img.set('date', img.date().format("YYYY-MM-dd")).copyProperties(img)})
+  var dates = ee.List(filtered.distinct("date").aggregate_array("date"))
+
+  return ee.ImageCollection(dates.map(function(date){
+  var d = ee.Date(date)
+  var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
+  return composite_collection.reduce(ee.Reducer.percentile([percentile])).rename(ee.Image(composite_collection.first()).bandNames()).set('date',date)
+  .set('count',composite_collection.size())
+  }));
+}
+
+
+//Dynamic Clear & Cloud Filter (imagecollection,geometry)
+exports.udm2info=function showInfo(collection,geometry){
+  var imagec=collection.filterBounds(geometry)
+  return ee.ImageCollection(imagec.map(function(image){
+  var geometry_area=geometry.area(0.001).divide(1000000)
+  var band_area=image.select(['b1','b2','b3','b4','b5','b6','b8']).gt(0).multiply(ee.Image.pixelArea()) 
+                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13)
+  var clear_area = band_area.get('b1')
+  var snow_area = band_area.get('b2')
+  var shadow_area = band_area.get('b3')
+  var lhaze_area= band_area.get('b4')
+  var Hhaze_area= band_area.get('b5')
+  var cloud_area= band_area.get('b6')
+  var raster_area=image.select('b8').neq(1).multiply(ee.Image.pixelArea()) 
+                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13).get('b8')
+  var clear_ratio=ee.Number(clear_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  var snow_ratio=ee.Number(snow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  var shadow_ratio=ee.Number(shadow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  var lhaze_ratio=ee.Number(lhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  var Hhaze_ratio=ee.Number(Hhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  var cloud_ratio=ee.Number(cloud_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+  return image
+  .set('percentage_overlap_aoi',ee.Number(raster_area).divide(1000000).divide(geometry_area).multiply(100).round())
+  .set('cloud_cover_percentage_aoi',ee.Number.clamp(cloud_ratio,0,100).round())
+  .set('snow_cover_percentage_aoi',ee.Number.clamp(snow_ratio,0,100).round())
+  .set('shadow_cover_percentage_aoi',ee.Number.clamp(shadow_ratio,0,100).round())
+  .set('light_haze_cover_percentage_aoi',ee.Number.clamp(lhaze_ratio,0,100).round())
+  .set('heavy_haze_cover_percentage_aoi',ee.Number.clamp(Hhaze_ratio,0,100).round())
+  .set('clear_cover_percentage_aoi',ee.Number.clamp(clear_ratio,0,100).round())
+  .set('aoi_area',geometry_area.round())
+  .set('pixel_area',ee.Number(raster_area).divide(1000000).round())
+  }))
+}

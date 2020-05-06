@@ -1,0 +1,91 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-120.65384411415185, 36.92661132978841],
+          [-120.65384411415185, 36.6373393494637],
+          [-120.33112072547998, 36.6373393494637],
+          [-120.33112072547998, 36.92661132978841]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//UDM2 Band Descriptions from (https://developers.planet.com/docs/data/udm-2/)
+
+/*
+Band 1	Clear map	[0, 1]	0: not clear, 1: clear
+Band 2	Snow map	[0, 1]	0: no snow or ice, 1: snow or ice
+Band 3	Shadow map	[0, 1]	0: no shadow, 1: shadow
+Band 4	Light haze map	[0, 1]	0: no light haze, 1: light haze
+Band 5	Heavy haze map	[0, 1]	0: no heavy haze, 1: heavy haze
+Band 6	Cloud map	[0, 1]	0: no cloud, 1: cloud
+Band 7	Confidence map	[0-100]	percentage value: per-pixel algorithmic confidence in classification
+Band 8	Unusable pixels	--	Equivalent to the UDM asset: see Planet's Imagery Specification for complete details
+
+*/
+
+
+//Get required modules
+var mx= require('users/samapriya/utils:cloud-utils')
+
+var collection=ee.ImageCollection("projects/sat-io/open-datasets/udm2-tests/udm2");
+// Map.centerObject(collection.first(),14)
+// Map.addLayer(collection.first())
+var daily_composite=mx.dailymax(collection)
+print('Total daily composites',daily_composite.size())
+
+//Get start and end dates from daily collection
+var daily_composite_list = daily_composite.toList(daily_composite.size())
+print('Start Date',ee.Image(daily_composite_list.get(0)).get('date'),
+'End Date',ee.Image(daily_composite_list.get(daily_composite.size().subtract(1))).get('date'))
+
+//Get UDM2 per daily composite
+var udm2composite=mx.udm2info(ee.ImageCollection(daily_composite),geometry)
+var udm2imagery=mx.udm2info(ee.ImageCollection(collection),geometry)
+
+print('Total UDM2 Composites for composites',
+udm2composite.size())
+print('UDM2 info for AOI from daily composite',
+udm2composite)
+
+print('Total UDM2 Composites for collection',
+udm2imagery.size())
+print('UDM2 info for AOI from daily composite',
+udm2imagery)
+
+//Extract Image ID for Search ID
+var searchid=function(image){
+  return image.set('search_id',ee.String(image.get('id_no')).replace('_3B_udm2',''))
+}
+
+
+// Export results with identifier
+Export.table.toDrive({
+  collection: udm2composite,
+  description: 'AOI_Composite_Export',
+  selectors: (["date",
+  "clear_cover_percentage_aoi",
+  "snow_cover_percentage_aoi",
+  "shadow_cover_percentage_aoi",
+  "light_haze_cover_percentage_aoi",
+  "heavy_haze_cover_percentage_aoi",
+  "cloud_cover_percentage_aoi",
+  "percentage_overlap_aoi"]),fileFormat: 'CSV',
+});
+
+
+// Export results with identifier
+Export.table.toDrive({
+  collection: udm2imagery.map(searchid),
+  description: 'AOI_Imagery_Export',
+  selectors: (["search_id",
+  "clear_cover_percentage_aoi",
+  "snow_cover_percentage_aoi",
+  "shadow_cover_percentage_aoi",
+  "light_haze_cover_percentage_aoi",
+  "heavy_haze_cover_percentage_aoi",
+  "cloud_cover_percentage_aoi",
+  "percentage_overlap_aoi"]),fileFormat: 'CSV',
+});
