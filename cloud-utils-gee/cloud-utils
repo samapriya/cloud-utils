@@ -43,6 +43,7 @@ exports.dailymax = function(collection) {
   var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
   return composite_collection.max().set('date',date)
   .set('count',composite_collection.size())
+  .set('system:time_start',composite_collection.first().get('system:time_start'))
   }));
 }
 
@@ -56,6 +57,7 @@ exports.dailymedian = function(collection) {
   var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
   return composite_collection.median().set('date',date)
   .set('count',composite_collection.size())
+  .set('system:time_start',composite_collection.first().get('system:time_start'))
   }));
 }
 
@@ -70,6 +72,7 @@ exports.dailyquality = function(collection,band) {
   var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
   return composite_collection.qualityMosaic(band).set('date',date)
   .set('count',composite_collection.size())
+  .set('system:time_start',composite_collection.first().get('system:time_start'))
   }));
 }
 
@@ -84,40 +87,41 @@ exports.dailypercentile = function(collection,percentile) {
   var composite_collection = collection.filterDate(d, d.advance(1, 'days'))
   return composite_collection.reduce(ee.Reducer.percentile([percentile])).rename(ee.Image(composite_collection.first()).bandNames()).set('date',date)
   .set('count',composite_collection.size())
+  .set('system:time_start',composite_collection.first().get('system:time_start'))
   }));
 }
 
 
 //Dynamic Clear & Cloud Filter (imagecollection,geometry)
 exports.udm2info=function showInfo(collection,geometry){
-  var imagec=collection.filterBounds(geometry)
+  var imagec=collection.filterBounds(geometry);
   return ee.ImageCollection(imagec.map(function(image){
-  var geometry_area=geometry.area(0.001).divide(1000000)
+  var geometry_area=geometry.area(0.001).divide(1000000);
   var band_area=image.select(['b1','b2','b3','b4','b5','b6','b8']).gt(0).multiply(ee.Image.pixelArea()) 
-                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13)
-  var clear_area = band_area.get('b1')
-  var snow_area = band_area.get('b2')
-  var shadow_area = band_area.get('b3')
-  var lhaze_area= band_area.get('b4')
-  var Hhaze_area= band_area.get('b5')
-  var cloud_area= band_area.get('b6')
+                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13);
+  var clear_area = band_area.get('b1');
+  var snow_area = band_area.get('b2');
+  var shadow_area = band_area.get('b3');
+  var lhaze_area= band_area.get('b4');
+  var Hhaze_area= band_area.get('b5');
+  var cloud_area= band_area.get('b6');
   var raster_area=image.select('b8').neq(1).multiply(ee.Image.pixelArea()) 
-                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13).get('b8')
-  var clear_ratio=ee.Number(clear_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
-  var snow_ratio=ee.Number(snow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
-  var shadow_ratio=ee.Number(shadow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
-  var lhaze_ratio=ee.Number(lhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
-  var Hhaze_ratio=ee.Number(Hhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
-  var cloud_ratio=ee.Number(cloud_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100)
+                        .reduceRegion(ee.Reducer.sum(),geometry,3,null,null,false,1e13).get('b8');
+  var clear_ratio=ee.Number(clear_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
+  var snow_ratio=ee.Number(snow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
+  var shadow_ratio=ee.Number(shadow_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
+  var lhaze_ratio=ee.Number(lhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
+  var Hhaze_ratio=ee.Number(Hhaze_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
+  var cloud_ratio=ee.Number(cloud_area).divide(1000000).divide(ee.Number(raster_area).divide(1000000)).multiply(100);
   return image
-  .set('percentage_overlap_aoi',ee.Number(raster_area).divide(1000000).divide(geometry_area).multiply(100).round())
-  .set('cloud_cover_percentage_aoi',ee.Number.clamp(cloud_ratio,0,100).round())
-  .set('snow_cover_percentage_aoi',ee.Number.clamp(snow_ratio,0,100).round())
-  .set('shadow_cover_percentage_aoi',ee.Number.clamp(shadow_ratio,0,100).round())
-  .set('light_haze_cover_percentage_aoi',ee.Number.clamp(lhaze_ratio,0,100).round())
-  .set('heavy_haze_cover_percentage_aoi',ee.Number.clamp(Hhaze_ratio,0,100).round())
-  .set('clear_cover_percentage_aoi',ee.Number.clamp(clear_ratio,0,100).round())
-  .set('aoi_area',geometry_area.round())
-  .set('pixel_area',ee.Number(raster_area).divide(1000000).round())
-  }))
-}
+  .set('percentage_overlap_aoi',ee.Number(raster_area).divide(1000000).divide(geometry_area).multiply(100).format('%.2f'))
+  .set('cloud_cover_percentage_aoi',ee.Number.clamp(cloud_ratio,0,100).format('%.2f'))
+  .set('snow_cover_percentage_aoi',ee.Number.clamp(snow_ratio,0,100).format('%.2f'))
+  .set('shadow_cover_percentage_aoi',ee.Number.clamp(shadow_ratio,0,100).format('%.2f'))
+  .set('light_haze_cover_percentage_aoi',ee.Number.clamp(lhaze_ratio,0,100).format('%.2f'))
+  .set('heavy_haze_cover_percentage_aoi',ee.Number.clamp(Hhaze_ratio,0,100).format('%.2f'))
+  .set('clear_cover_percentage_aoi',ee.Number.clamp(clear_ratio,0,100).format('%.2f'))
+  .set('aoi_area',geometry_area.format('%.2f'))
+  .set('pixel_area',ee.Number(raster_area).divide(1000000).format('%.2f'));
+  }));
+};
