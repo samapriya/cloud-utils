@@ -1,0 +1,56 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-120.52086050418707, 36.80681794808555],
+          [-120.52086050418707, 36.66209208146643],
+          [-120.27847463992926, 36.66209208146643],
+          [-120.27847463992926, 36.80681794808555]]], null, false),
+    vis = {"opacity":1,"bands":["b1"],"max":1,"palette":["f8ff89","ff8d2b"]};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+/*
+Copyright (c) 2020 Samapriya Roy. All rights reserved.
+
+This work is licensed under the terms of the Apache 2 license.  
+For a copy, see <https://www.apache.org/licenses/LICENSE-2.0>.
+
+Cite using:
+
+
+*/
+
+//Center to geometry
+Map.centerObject(geometry,12)
+Map.setOptions('HYBRID')
+
+//Get required module
+var cloudy= require('users/samapriya/utils:cloud-utils')
+
+//Import the Planet UDM-2 Sample collection
+var udm2collection=ee.ImageCollection("projects/sat-io/open-datasets/udm2-tests/udm2");
+print('Total udm-2 images in collection',udm2collection.size())
+
+//Get collection with daily composites
+var daily_max=cloudy.dailymax(udm2collection)
+print('Daily Max Composite',daily_max)
+
+var daily_median=cloudy.dailymedian(udm2collection)
+print('Daily Median Composite',daily_median)
+
+var daily_quality_composite=cloudy.dailyquality(udm2collection,'b6')
+print('Daily Quality Composite',daily_quality_composite)
+
+var daily_percentile=cloudy.dailypercentile(udm2collection,10)
+print('Daily Percentile Composite',daily_percentile)
+
+//Let's add a few of these
+Map.addLayer(daily_max.first().clip(geometry),vis,'Daily Max Composite',false)
+Map.addLayer(daily_median.first().clip(geometry),vis,'Daily Median Composite',false)
+Map.addLayer(daily_quality_composite.first().clip(geometry),vis,'Daily Quality Composite',false)
+Map.addLayer(daily_percentile.first().clip(geometry),vis,'Daily Percentile Composite',false)
