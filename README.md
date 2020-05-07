@@ -1,5 +1,6 @@
 ## **[cloud-utils: Cloud Utility for Planet's UMD-2](https://samapriya.github.io/cloud-utils/)**
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3813171.svg)](https://doi.org/10.5281/zenodo.3813171)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
@@ -35,9 +36,9 @@ Eventually this will allow you to apply cloud masking to PlanetScope Scenes and 
 
 If you use this module, and find this tool useful, star and cite it as below
 
-<b>
-```
 
 ```
-</b>
+Samapriya Roy. (2020, May 7). samapriya/cloud-utils: cloud-utils: Cloud utils for Planet UDM-2 (Version 0.2). Zenodo.
+http://doi.org/10.5281/zenodo.3813171
+```
 
