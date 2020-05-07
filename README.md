@@ -1,4 +1,4 @@
-## **[cloud-utils: Cloud Utility for Planet's UMD-2](https://samapriya.github.io/cloud-utils/)** &nbsp; [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Try%20cloud-utils%20in%20#GoogleEarthEngine%20@planetlabs%20&url=https://github.com/samapriya/cloud-utils)
+## **[cloud-utils: Cloud Utility for Planet's UMD-2](https://samapriya.github.io/cloud-utils/)**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
