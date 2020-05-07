@@ -396,7 +396,7 @@
                 
                 
                 <h1 id="dynamic-cloud-filter-export">Dynamic Cloud Filter Export<a class="headerlink" href="#dynamic-cloud-filter-export" title="Permanent link">&para;</a></h1>
-<p>This reduces the number of vertices for a multi vertex and complex GeoJSON. Extremely high vertex count (over 500) seem to fail and hence this tool allows you to export a new geojson with reduced vertices. It uses an implementation of the Visvalingam-Wyatt line simplification algorithm. This tool does work with and without Fiona, but Fiona installation is recommended.</p>
+<p>The Dynamic cloud filter and export tool is designed to allow the user to calculate total percentage stats for all bands in the UDM-2 imagery. Meaning for each AOI you get percentage clear pixel, snow cover, shadow, and so on. The method is simply based on summarizing these values over the overlapped AOI and then export these percentages up to two decimal places. The method also takes into account that since the daily composite or imagery may not overlap with the entire AOI it also generates a percentage overlap. The example runs this on both all imagery in the collection as well as daily composites.</p>
 <p><img alt="dyanmic_cloud_export" src="https://user-images.githubusercontent.com/6677629/81249836-a535a980-8fed-11ea-97c8-757e71bb6a64.gif" /></p>
 <p>You can also copy and past the code from below.</p>
 <div class="codehilite"><pre><span></span><span class="c1">//UDM2 Band Descriptions from (https://developers.planet.com/docs/data/udm-2/)</span>
