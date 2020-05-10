@@ -3,6 +3,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3813171.svg)](https://doi.org/10.5281/zenodo.3813171)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+#### [Go to always updated docs here](https://samapriya.github.io/cloud-utils/)
 
 **Please note: This tool is in no way an official tool or Planet offering, but is a personal project created and maintained by Samapriya Roy**
 
